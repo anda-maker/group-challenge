@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ใครเป็นที่สุดในกลุ่ม</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #2563EB;
+    --blue-light: #3B82F6;
+    --blue-pale: #EFF6FF;
+    --blue-mid: #BFDBFE;
+    --blue-dark: #1E40AF;
+    --white: #FFFFFF;
+    --gray-50: #F8FAFF;
+    --gray-100: #E8F0FE;
+    --gray-400: #94A3B8;
+    --gray-600: #475569;
+    --gray-800: #1E293B;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: var(--gray-50);
+    min-height: 100vh;
+    color: var(--gray-800);
+    overflow-x: hidden;
+  }
+
+  .screen { display: none; min-height: 100vh; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  /* ---- TOP BAR ---- */
+  .topbar {
+    background: var(--white);
+    border-bottom: 1px solid var(--blue-mid);
+    padding: 16px 20px 14px;
+    display: flex; align-items: center; gap: 12px;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .topbar-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--blue);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .topbar-icon svg { width: 18px; height: 18px; fill: white; }
+  .topbar-title { font-size: 16px; font-weight: 700; color: var(--blue-dark); }
+  .topbar-sub { font-size: 12px; color: var(--gray-400); }
+
+  /* ---- PROGRESS ---- */
+  .prog-wrap { padding: 14px 20px 0; }
+  .prog-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .prog-label { font-size: 13px; color: var(--gray-600); font-weight: 500; }
+  .prog-track { height: 5px; background: var(--blue-mid); border-radius: 99px; overflow: hidden; }
+  .prog-fill { height: 100%; background: var(--blue); border-radius: 99px; transition: width .4s cubic-bezier(.4,0,.2,1); }
+
+  /* ---- SCROLL CONTENT ---- */
+  .scroll-body { flex: 1; overflow-y: auto; padding: 16px 20px 100px; }
+
+  /* ---- QUESTION CARD ---- */
+  .q-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1px solid var(--blue-mid);
+    padding: 20px 18px;
+    margin-bottom: 16px;
+    animation: slideIn .25s ease;
+  }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .q-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--blue-pale);
+    color: var(--blue-dark);
+    font-size: 11px; font-weight: 600;
+    padding: 4px 10px; border-radius: 99px;
+    margin-bottom: 10px;
+    letter-spacing: .02em;
+  }
+  .q-text { font-size: 17px; font-weight: 600; color: var(--gray-800); line-height: 1.5; }
+  .q-hint { font-size: 12px; color: var(--gray-400); margin-top: 6px; }
+
+  /* ---- CHOICE BUTTONS ---- */
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+  .choice {
+    background: var(--gray-50);
+    border: 1.5px solid var(--blue-mid);
+    border-radius: var(--radius-sm);
+    padding: 14px 10px;
+    font-size: 15px; font-weight: 600;
+    color: var(--gray-800);
+    cursor: pointer;
+    text-align: center;
+    transition: all .15s ease;
+    -webkit-user-select: none; user-select: none;
+  }
+  .choice:active { transform: scale(0.95); }
+  .choice.selected {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: white;
+    box-shadow: 0 4px 14px rgba(37,99,235,.3);
+  }
+  .choice.flash {
+    background: var(--blue-dark);
+    border-color: var(--blue-dark);
+    color: white;
+  }
+
+  /* ---- START SCREEN ---- */
+  .start-hero {
+    background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+    padding: 40px 24px 32px;
+    text-align: center;
+  }
+  .start-hero h1 { font-size: 26px; font-weight: 700; color: white; line-height: 1.3; margin-bottom: 8px; }
+  .start-hero p { font-size: 14px; color: rgba(255,255,255,.8); }
+  .start-body { flex: 1; padding: 24px 20px; background: var(--white); }
+  .start-label { font-size: 14px; font-weight: 600; color: var(--gray-600); margin-bottom: 14px; }
+  .member-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 28px; }
+  .member-btn {
+    background: var(--gray-50);
+    border: 1.5px solid var(--blue-mid);
+    border-radius: var(--radius-sm);
+    padding: 16px 12px;
+    font-size: 15px; font-weight: 600;
+    color: var(--gray-800);
+    cursor: pointer;
+    text-align: center;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all .15s;
+    position: relative;
+  }
+  .member-btn.done { opacity: .5; cursor: default; }
+  .member-btn.done::after {
+    content: '✓';
+    position: absolute; top: 6px; right: 8px;
+    font-size: 11px; color: #1D9E75; font-weight: 700;
+  }
+  .member-btn.selected {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: white;
+    box-shadow: 0 4px 14px rgba(37,99,235,.3);
+  }
+  .voted-bar {
+    background: var(--blue-pale);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--blue-dark);
+  }
+  .voted-dots { display: flex; gap: 4px; }
+  .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--blue-mid);
+    transition: background .3s;
+  }
+  .dot.filled { background: var(--blue); }
+
+  /* ---- BIG BUTTON ---- */
+  .big-btn {
+    width: 100%;
+    background: var(--blue);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    font-size: 16px; font-weight: 700;
+    font-family: 'Sarabun', sans-serif;
+    cursor: pointer;
+    transition: all .15s;
+    box-shadow: 0 4px 14px rgba(37,99,235,.3);
+  }
+  .big-btn:active { transform: scale(0.98); }
+  .big-btn:disabled { background: var(--gray-400); box-shadow: none; cursor: not-allowed; }
+  .big-btn.outline {
+    background: transparent;
+    color: var(--blue);
+    border: 1.5px solid var(--blue);
+    box-shadow: none;
+    margin-top: 10px;
+  }
+
+  /* ---- DONE SCREEN ---- */
+  .done-hero {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 40px 24px;
+    text-align: center;
+    background: var(--white);
+  }
+  .done-circle {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: var(--blue-pale);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+    border: 2px solid var(--blue-mid);
+  }
+  .done-circle svg { width: 36px; height: 36px; }
+  .done-hero h2 { font-size: 24px; font-weight: 700; color: var(--blue-dark); margin-bottom: 8px; }
+  .done-hero p { font-size: 14px; color: var(--gray-600); margin-bottom: 8px; }
+  .done-btns { width: 100%; max-width: 300px; margin-top: 28px; }
+
+  /* ---- RESULT SCREEN ---- */
+  .result-header {
+    background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+    padding: 24px 20px;
+    text-align: center;
+  }
+  .result-header h2 { font-size: 22px; font-weight: 700; color: white; }
+  .result-header p { font-size: 13px; color: rgba(255,255,255,.8); margin-top: 4px; }
+  .result-body { flex: 1; overflow-y: auto; padding: 16px 20px 100px; background: var(--gray-50); }
+  .result-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1px solid var(--blue-mid);
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .result-badge {
+    display: inline-block;
+    background: var(--blue-pale); color: var(--blue-dark);
+    font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 99px;
+    margin-bottom: 8px; letter-spacing: .02em;
+  }
+  .result-q { font-size: 14px; font-weight: 600; color: var(--gray-800); margin-bottom: 14px; }
+  .chart-wrap { position: relative; height: 180px; margin-bottom: 10px; }
+  .winner-row {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--blue-pale); border-radius: var(--radius-sm);
+    padding: 10px 14px; margin-top: 10px;
+  }
+  .winner-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--blue); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+  }
+  .winner-name { font-size: 15px; font-weight: 700; color: var(--blue-dark); }
+  .winner-score { font-size: 12px; color: var(--gray-600); }
+  .reset-btn {
+    position: fixed; bottom: 20px; right: 20px;
+    background: white;
+    border: 1px solid var(--blue-mid);
+    color: var(--blue);
+    border-radius: 99px;
+    padding: 10px 18px;
+    font-size: 13px; font-weight: 600;
+    font-family: 'Sarabun', sans-serif;
+    cursor: pointer;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+  }
+  .back-btn {
+    position: fixed; bottom: 20px; left: 20px;
+    background: white;
+    border: 1px solid var(--blue-mid);
+    color: var(--gray-600);
+    border-radius: 99px;
+    padding: 10px 18px;
+    font-size: 13px; font-weight: 600;
+    font-family: 'Sarabun', sans-serif;
+    cursor: pointer;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+  }
+
+  .nav-btns { 
+    position: sticky; bottom: 0;
+    background: var(--white); 
+    border-top: 1px solid var(--blue-mid);
+    padding: 12px 20px;
+    display: flex; gap: 10px;
+  }
+  .nav-btn {
+    flex: 1; padding: 13px;
+    border-radius: var(--radius-sm);
+    font-size: 15px; font-weight: 600;
+    font-family: 'Sarabun', sans-serif;
+    cursor: pointer; border: none;
+    transition: all .15s;
+  }
+  .nav-btn.back { background: var(--gray-100); color: var(--blue-dark); border: 1px solid var(--blue-mid); flex: 0 0 80px; }
+  .nav-btn.next { background: var(--blue); color: white; box-shadow: 0 4px 14px rgba(37,99,235,.25); }
+  .nav-btn.next:disabled { background: var(--blue-mid); color: white; box-shadow: none; }
+</style>
+</head>
+<body>
+
+<!-- START SCREEN -->
+<div id="s-start" class="screen active">
+  <div class="start-hero">
+    <h1>ใครเป็นที่สุดในกลุ่ม 🏆</h1>
+    <p>เลือกชื่อของคุณแล้วเริ่มโหวตได้เลย</p>
+  </div>
+  <div class="start-body">
+    <div class="voted-bar">
+      <div class="voted-dots" id="voted-dots"></div>
+      <span id="voted-text">โหวตแล้ว 0 / 5 คน</span>
+    </div>
+    <p class="start-label">คุณชื่ออะไร?</p>
+    <div class="member-grid" id="member-grid"></div>
+    <button class="big-btn" id="start-btn" disabled onclick="startVoting()">เริ่มโหวตเลย →</button>
+    <button class="big-btn outline" id="result-btn" onclick="showResults()">ดูผลโหวต</button>
+  </div>
+</div>
+
+<!-- VOTE SCREEN -->
+<div id="s-vote" class="screen">
+  <div class="topbar">
+    <div class="topbar-icon">
+      <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+    </div>
+    <div>
+      <div class="topbar-title" id="voter-name-bar">โหวตโดย —</div>
+      <div class="topbar-sub" id="q-count-bar">ข้อ 1 จาก 16</div>
+    </div>
+  </div>
+  <div class="prog-wrap">
+    <div class="prog-row">
+      <span class="prog-label" id="prog-label">ข้อ 1 / 16</span>
+      <span class="prog-label" id="prog-pct">6%</span>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:6%"></div></div>
+  </div>
+  <div class="scroll-body">
+    <div class="q-card" id="q-card">
+      <div class="q-badge" id="q-badge"></div>
+      <div class="q-text" id="q-text"></div>
+      <div class="q-hint">เลือกได้ 1 คน</div>
+      <div class="choices" id="choices"></div>
+    </div>
+  </div>
+  <div class="nav-btns">
+    <button class="nav-btn back" onclick="prevQ()">◀ ย้อน</button>
+    <button class="nav-btn next" id="next-btn" disabled onclick="nextQ()">ถัดไป ▶</button>
+  </div>
+</div>
+
+<!-- DONE SCREEN -->
+<div id="s-done" class="screen">
+  <div class="done-hero">
+    <div class="done-circle">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round">
+        <path d="M20 6L9 17l-5-5"/>
+      </svg>
+    </div>
+    <h2>โหวตเสร็จแล้ว!</h2>
+    <p id="done-voter-msg">ขอบคุณที่โหวต</p>
+    <p id="done-count-msg" style="color:var(--blue);font-weight:600"></p>
+    <div class="done-btns">
+      <button class="big-btn" onclick="goStart()">ให้คนถัดไปโหวต</button>
+      <button class="big-btn outline" onclick="showResults()">ดูผลโหวต</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div id="s-result" class="screen">
+  <div class="result-header">
+    <h2>ผลโหวต 🏆</h2>
+    <p id="result-sub">โหวตแล้ว 5 / 5 คน</p>
+  </div>
+  <div class="result-body" id="result-body"></div>
+  <button class="back-btn" onclick="goStart()">← กลับ</button>
+  <button class="reset-btn" onclick="resetAll()">🔄 รีเซ็ต</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+const MEMBERS = ['จ๊ะจ๋า','อันดา','ปรายฟ้า','แตงโม','มิ้นท์'];
+const COLORS = ['#2563EB','#EC4899','#10B981','#F59E0B','#8B5CF6'];
+const QUESTIONS = [
+  {badge:'มีแนวโน้มจะแต่งงานคนแรก', q:'ใครในกลุ่มที่คุณคิดว่าจะแต่งงานเป็นคนแรก?'},
+  {badge:'ฮอตที่สุด', q:'ใครในกลุ่มที่ฮอตที่สุดในสายตาคุณ?'},
+  {badge:'ดูมีอนาคตที่สุด', q:'ใครในกลุ่มที่ดูมีอนาคตสดใสที่สุด?'},
+  {badge:'ใครจะมีแฟนคนแรก', q:'ใครในกลุ่มที่คุณคิดว่าจะมีแฟนก่อนใครเพื่อน?'},
+  {badge:'พูดจาน่าเชื่อถือที่สุด', q:'ใครพูดแล้วรู้สึกอยากเชื่อทุกอย่างที่พูด?'},
+  {badge:'ใครมีความคิดโตสุด', q:'ใครคิดเรื่องชีวิตเป็นผู้ใหญ่กว่าอายุที่สุด?'},
+  {badge:'ใครทำให้กลุ่มไม่เคยเงียบ', q:'กลุ่มจะเงียบไม่ได้ถ้าขาดใคร?'},
+  {badge:'พระแม่ของกลุ่ม', q:'ใครคือ "พระแม่" ที่คอยดูแลทุกคนในกลุ่มที่สุด?'},
+  {badge:'ใครเหลี่ยมสุด', q:'ใครพูดอะไรก็มีเหตุผลสนับสนุนเสมอ?'},
+  {badge:'ใครตอบแชทช้าสุด', q:'ส่งข้อความแล้วรอนานก่อนได้รับการตอบกลับ ใครคือนั้น?'},
+  {badge:'ใครห้าวสุด', q:'ใครห้าวสุดในกลุ่ม?'},
+  {badge:'ใครแต่งตัวนานสุด', q:'ถ้าจะออกไปข้างนอกด้วยกัน ใครทำให้ทุกคนต้องรอนานที่สุดเพราะแต่งตัว?'},
+  {badge:'ใครเอิ้กอ้ากสุด', q:'ใครเอิ้กอ้ากสุด?'},
+  {badge:'ใครจริงจังเรื่องเรียนสุด', q:'ใครจริงจังกับการเรียนมากที่สุดในกลุ่ม?'},
+  {badge:'ใครมีเทสสุด', q:'ใครมี taste ที่ดีที่สุด ไม่ว่าจะเป็นเสื้อผ้า เพลง หรือของใช้?'},
+  {badge:'ใครกล้ามใหญ่สุด', q:'ใครกล้ามใหญ่สุด?'},
+];
+
+let allVotes = {};
+let currentVoter = null;
+let currentQ = 0;
+let myAnswers = {};
+let charts = [];
+
+function load(){ try{ allVotes = JSON.parse(localStorage.getItem('gc2_votes')||'{}'); }catch(e){ allVotes={}; } }
+function save(){ try{ localStorage.setItem('gc2_votes', JSON.stringify(allVotes)); }catch(e){} }
+
+function initStart(){
+  load();
+  const grid = document.getElementById('member-grid');
+  grid.innerHTML = '';
+  MEMBERS.forEach(m => {
+    const done = !!allVotes[m];
+    const btn = document.createElement('button');
+    btn.className = 'member-btn' + (m===currentVoter?' selected':'') + (done?' done':'');
+    btn.textContent = m;
+    btn.onclick = () => {
+      if(done) return;
+      currentVoter = m;
+      initStart();
+    };
+    grid.appendChild(btn);
+  });
+
+  const vc = Object.keys(allVotes).length;
+  document.getElementById('voted-text').textContent = `โหวตแล้ว ${vc} / 5 คน`;
+  const dots = document.getElementById('voted-dots');
+  dots.innerHTML = '';
+  for(let i=0;i<5;i++){
+    const d = document.createElement('div');
+    d.className = 'dot' + (i<vc?' filled':'');
+    dots.appendChild(d);
+  }
+
+  const startBtn = document.getElementById('start-btn');
+  if(!currentVoter || allVotes[currentVoter]){
+    startBtn.disabled = true;
+    startBtn.textContent = 'เลือกชื่อของคุณก่อน';
+  } else {
+    startBtn.disabled = false;
+    startBtn.textContent = `${currentVoter} เริ่มโหวตเลย →`;
+  }
+  document.getElementById('result-btn').style.display = vc > 0 ? 'block' : 'none';
+}
+
+function startVoting(){
+  if(!currentVoter || allVotes[currentVoter]) return;
+  myAnswers = {};
+  currentQ = 0;
+  document.getElementById('voter-name-bar').textContent = currentVoter;
+  showPage('s-vote');
+  renderQ();
+}
+
+function renderQ(){
+  const q = QUESTIONS[currentQ];
+  document.getElementById('q-badge').textContent = q.badge;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('q-count-bar').textContent = `ข้อ ${currentQ+1} จาก 16`;
+  const pct = Math.round((currentQ+1)/16*100);
+  document.getElementById('prog-label').textContent = `ข้อ ${currentQ+1} / 16`;
+  document.getElementById('prog-pct').textContent = pct+'%';
+  document.getElementById('prog-fill').style.width = pct+'%';
+
+  const wrap = document.getElementById('choices');
+  wrap.innerHTML = '';
+  MEMBERS.forEach(m => {
+    const btn = document.createElement('button');
+    btn.className = 'choice' + (myAnswers[currentQ]===m?' selected':'');
+    btn.textContent = m;
+    btn.onclick = () => selectAnswer(m, btn);
+    wrap.appendChild(btn);
+  });
+
+  document.getElementById('next-btn').disabled = !myAnswers[currentQ];
+  document.getElementById('next-btn').textContent = currentQ===15 ? 'ส่งคำตอบ ✓' : 'ถัดไป ▶';
+  document.getElementById('q-card').style.animation = 'none';
+  setTimeout(()=>{ document.getElementById('q-card').style.animation = 'slideIn .25s ease'; },10);
+}
+
+function selectAnswer(name, btn){
+  myAnswers[currentQ] = name;
+  document.querySelectorAll('.choice').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected', 'flash');
+  setTimeout(()=>btn.classList.remove('flash'), 150);
+  document.getElementById('next-btn').disabled = false;
+  setTimeout(()=> nextQ(), 300);
+}
+
+function nextQ(){
+  if(!myAnswers[currentQ]) return;
+  if(currentQ === 15){
+    allVotes[currentVoter] = {...myAnswers};
+    save();
+    const vc = Object.keys(allVotes).length;
+    document.getElementById('done-voter-msg').textContent = `${currentVoter} โหวตเสร็จแล้ว!`;
+    document.getElementById('done-count-msg').textContent = vc>=5 ? 'ทุกคนโหวตครบแล้ว ดูผลได้เลย!' : `โหวตแล้ว ${vc} / 5 คน`;
+    showPage('s-done');
+    return;
+  }
+  currentQ++;
+  renderQ();
+}
+
+function prevQ(){
+  if(currentQ > 0){ currentQ--; renderQ(); }
+}
+
+function goStart(){
+  currentVoter = null;
+  showPage('s-start');
+  initStart();
+}
+
+function showResults(){
+  load();
+  charts.forEach(c=>{ try{c.destroy();}catch(e){} });
+  charts = [];
+  const body = document.getElementById('result-body');
+  body.innerHTML = '';
+  const vc = Object.keys(allVotes).length;
+  document.getElementById('result-sub').textContent = `โหวตแล้ว ${vc} / 5 คน`;
+
+  QUESTIONS.forEach((q,qi)=>{
+    const tally = {};
+    MEMBERS.forEach(m=>tally[m]=0);
+    Object.values(allVotes).forEach(ans=>{ const p=ans[qi]; if(p!=null) tally[p]=(tally[p]||0)+1; });
+    const sorted = Object.entries(tally).sort((a,b)=>b[1]-a[1]);
+    const winner = sorted[0];
+    const total = Object.values(tally).reduce((a,b)=>a+b,0);
+
+    const card = document.createElement('div');
+    card.className = 'result-card';
+    const cid = 'rc'+qi;
+    card.innerHTML = `
+      <div class="result-badge">${q.badge}</div>
+      <div class="result-q">${q.q}</div>
+      <div class="chart-wrap"><canvas id="${cid}"></canvas></div>
+      ${winner[1]>0?`<div class="winner-row">
+        <div class="winner-avatar">${winner[0][0]}</div>
+        <div>
+          <div class="winner-name">${winner[0]}</div>
+          <div class="winner-score">${winner[1]} โหวต (${total>0?Math.round(winner[1]/total*100):0}%)</div>
+        </div>
+      </div>`:''}
+    `;
+    body.appendChild(card);
+
+    setTimeout(()=>{
+      const ctx = document.getElementById(cid);
+      if(!ctx) return;
+      const ch = new Chart(ctx,{
+        type:'doughnut',
+        data:{ labels:MEMBERS, datasets:[{ data:MEMBERS.map(m=>tally[m]), backgroundColor:COLORS, borderWidth:2, borderColor:'#fff' }] },
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          plugins:{
+            legend:{ position:'right', labels:{ font:{size:12,family:'Sarabun'}, boxWidth:12, padding:8,
+              generateLabels: chart => MEMBERS.map((m,i)=>({
+                text:`${m} (${tally[m]})`, fillStyle:COLORS[i], strokeStyle:COLORS[i], lineWidth:0, index:i
+              }))
+            }},
+            tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: ${ctx.raw} คะแนน` } }
+          }
+        }
+      });
+      charts.push(ch);
+    },50);
+  });
+  showPage('s-result');
+}
+
+function resetAll(){
+  if(!confirm('รีเซ็ตผลโหวตทั้งหมด?')) return;
+  try{localStorage.removeItem('gc2_votes');}catch(e){}
+  allVotes={};
+  currentVoter=null;
+  goStart();
+}
+
+function showPage(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+load();
+initStart();
+</script>
+</body>
+</html>
