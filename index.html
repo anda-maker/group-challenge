@@ -195,21 +195,22 @@ const MEMBERS = ['จ๊ะจ๋า','อันดา','ปรายฟ้า',
 const COLORS = ['#2563EB','#EC4899','#10B981','#F59E0B','#8B5CF6'];
 const QUESTIONS = [
   {badge:'มีแนวโน้มจะแต่งงานคนแรก', q:'ใครในกลุ่มที่คุณคิดว่าจะแต่งงานเป็นคนแรก?'},
-  {badge:'ฮอตที่สุด', q:'ใครในกลุ่มที่ฮอตที่สุดในสายตาคุณ?'},
+  {badge:'ฮอตที่สุด', q:'ใครในกลุ่มที่ฮอตที่สุด?'},
   {badge:'ดูมีอนาคตที่สุด', q:'ใครในกลุ่มที่ดูมีอนาคตสดใสที่สุด?'},
   {badge:'ใครจะมีแฟนคนแรก', q:'ใครในกลุ่มที่คุณคิดว่าจะมีแฟนก่อนใครเพื่อน?'},
   {badge:'พูดจาน่าเชื่อถือที่สุด', q:'ใครพูดแล้วรู้สึกอยากเชื่อทุกอย่างที่พูด?'},
   {badge:'ใครมีความคิดโตสุด', q:'ใครคิดเรื่องชีวิตเป็นผู้ใหญ่กว่าอายุที่สุด?'},
   {badge:'ใครทำให้กลุ่มไม่เคยเงียบ', q:'กลุ่มจะเงียบไม่ได้ถ้าขาดใคร?'},
   {badge:'พระแม่ของกลุ่ม', q:'ใครคือ "พระแม่" ที่คอยดูแลทุกคนในกลุ่มที่สุด?'},
-  {badge:'ใครเหลี่ยมสุด', q:'ใครพูดอะไรก็มีเหตุผลสนับสนุนเสมอ?'},
+  {badge:'ใครวาดรูปสวยที่สุด', q:'ใครวาดรูปสวยที่สุด?'},
   {badge:'ใครดองแชทเก่งสุด', q:'ใครดองแชทเก่งสุด?'},
   {badge:'ใครห้าวสุด', q:'ใครห้าวสุดในกลุ่ม?'},
-  {badge:'ใครแต่งตัวนานสุด', q:'ถ้าจะออกไปข้างนอกด้วยกัน ใครทำให้ทุกคนต้องรอนานที่สุดเพราะแต่งตัว?'},
+  {badge:'ใครเล่นโรบอกบ่อยที่สุด', q:'ใครเล่นโรบอกบ่อยที่สุด?'},
   {badge:'ใครเอิ้กอ้ากสุด', q:'ใครเอิ้กอ้ากสุด?'},
   {badge:'ใครจริงจังเรื่องเรียนสุด', q:'ใครจริงจังกับการเรียนมากที่สุดในกลุ่ม?'},
-  {badge:'ใครมีเทสสุด', q:'ใครมี taste ที่ดีที่สุด ไม่ว่าจะเป็นเสื้อผ้า เพลง หรือของใช้?'},
+  {badge:'ใครมีเทสสุด', q:'ใครเทสดีสุด?'},
   {badge:'ใครกล้ามใหญ่สุด', q:'ใครกล้ามใหญ่สุด?'},
+  {badge:'ใครเหลี่ยมสุด', q:'ใครเหลี่ยมสุด?'},
 ];
 
 let allVotes = {};
@@ -292,9 +293,9 @@ function renderQ(){
   const q=QUESTIONS[currentQ];
   document.getElementById('q-badge').textContent=q.badge;
   document.getElementById('q-text').textContent=q.q;
-  document.getElementById('q-count-bar').textContent=`ข้อ ${currentQ+1} จาก 16`;
-  const pct=Math.round((currentQ+1)/16*100);
-  document.getElementById('prog-label').textContent=`ข้อ ${currentQ+1} / 16`;
+  document.getElementById('q-count-bar').textContent=`ข้อ ${currentQ+1} จาก 17`;
+  const pct=Math.round((currentQ+1)/17*100);
+  document.getElementById('prog-label').textContent=`ข้อ ${currentQ+1} / 17`;
   document.getElementById('prog-pct').textContent=pct+'%';
   document.getElementById('prog-fill').style.width=pct+'%';
   const wrap=document.getElementById('choices');
@@ -307,7 +308,7 @@ function renderQ(){
     wrap.appendChild(btn);
   });
   document.getElementById('next-btn').disabled=!myAnswers[currentQ];
-  document.getElementById('next-btn').textContent=currentQ===15?'ส่งคำตอบ ✓':'ถัดไป ▶';
+  document.getElementById('next-btn').textContent=currentQ===16?'ส่งคำตอบ ✓':'ถัดไป ▶';
   document.getElementById('q-card').style.animation='none';
   setTimeout(()=>{ document.getElementById('q-card').style.animation='slideIn .25s ease'; },10);
 }
@@ -323,7 +324,7 @@ function selectAnswer(name,btn){
 
 async function nextQ(){
   if(myAnswers[currentQ]==null)return;
-  if(currentQ===15){
+  if(currentQ===16){
     showLoading('กำลังบันทึกคำตอบ...');
     try { await saveVote(currentVoter,myAnswers); allVotes[currentVoter]={...myAnswers}; }
     catch(e){ hideLoading(); showToast('บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง'); return; }
